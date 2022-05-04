@@ -63,6 +63,7 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
 
     override fun onServiceDisconnected(componentName: ComponentName?) {}
 
+    // połączenie z czujnikiem
     private fun retriveBoard(macAddr: String) {
         var board: MetaWearBoard? = null
         val btManager : BluetoothManager = this.getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
