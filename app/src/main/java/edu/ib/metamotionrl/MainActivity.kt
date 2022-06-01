@@ -9,9 +9,9 @@ import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
 import android.view.View
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import bolts.Continuation
-import bolts.Task
 import com.mbientlab.metawear.MetaWearBoard
 import com.mbientlab.metawear.Route
 import com.mbientlab.metawear.android.BtleService
@@ -24,16 +24,19 @@ import com.mbientlab.metawear.module.Accelerometer
 class MainActivity : AppCompatActivity(), ServiceConnection {
     private var serviceBinder: BtleService.LocalBinder? = null
     lateinit var accelerometer: Accelerometer
+    lateinit var deviceData: TextView
+    var dataD = "{x: , y:, z: }"
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        deviceData = findViewById<View>(R.id.data) as TextView
 
         ///< Bind the service when the activity is created
         applicationContext.bindService(
-            Intent(this, BtleService::class.java),
-            this, BIND_AUTO_CREATE
+                Intent(this, BtleService::class.java),
+                this, BIND_AUTO_CREATE
         )
 
         findViewById<View>(R.id.start).setOnClickListener {
@@ -69,6 +72,8 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
         val btManager : BluetoothManager = this.getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
         val remoteDevice: BluetoothDevice = btManager.adapter.getRemoteDevice(macAddr)
 
+
+
         board = serviceBinder?.getMetaWearBoard(remoteDevice)
         board?.connectAsync()?.onSuccessTask {
             Log.i("Device", "Connected to MetaMotionRL $macAddr")
@@ -80,8 +85,15 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
 
             accelerometer.acceleration().addRouteAsync(RouteBuilder { source ->
                 source.stream { data, env ->
-                    Log.i("Accelerometer", data.value(Acceleration::class.java).toString())
+                    dataD = data.value(Acceleration::class.java).toString()
+                    Log.i("Accelerometer", dataD)
+
+                    runOnUiThread {
+                        deviceData.text = dataD
+                    }
+
                 }
+
             })
         }?.continueWith(Continuation<Route?, Void?> { task ->
             if (task.isFaulted) {
