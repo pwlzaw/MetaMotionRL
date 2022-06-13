@@ -11,7 +11,7 @@
         android:theme="@style/Theme.MetaMotionRL">
 
         <service android:name="com.mbientlab.metawear.android.BtleService" />
-
+        <activity android:name=".StoredData"/>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
