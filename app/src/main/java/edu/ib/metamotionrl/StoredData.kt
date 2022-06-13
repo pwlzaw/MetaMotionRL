@@ -2,6 +2,7 @@ package edu.ib.metamotionrl
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
@@ -23,19 +24,19 @@ class StoredData: AppCompatActivity() {
         setContentView(R.layout.database)
 
         database = this.openOrCreateDatabase("Database", Context.MODE_PRIVATE, null)
-        val sqlDB = "CREATE TABLE IF NOT EXISTS StoredData (name String, indx float, valueX float, valueY float, valueZ float)"
+        val sqlDB = "CREATE TABLE IF NOT EXISTS StoredData (name String, time String, valueX String, valueY String, valueZ String)"
         database.execSQL(sqlDB)
 
         results = ArrayList<String>()
         val c = database.rawQuery(
-                "SELECT DISTINCT name FROM UsersPlans",
+                "SELECT name FROM StoredData",
                 null
         )
 
         if (c.moveToFirst()) {
             do {
-                val ind = c.getString(c.getColumnIndex("name"))
-                results.add(ind)
+                val name = c.getString(c.getColumnIndex("name"))
+                results.add(name)
             } while (c.moveToNext())
         }
 
@@ -49,5 +50,10 @@ class StoredData: AppCompatActivity() {
                 findViewById<View>(R.id.list) as ListView
         listView.adapter = adapter
         c.close()
+    }
+
+    fun onBack(view: View) {
+        val intent = Intent(this, MainActivity::class.java)
+        this.startActivity(intent)
     }
 }

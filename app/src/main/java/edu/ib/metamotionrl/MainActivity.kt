@@ -3,14 +3,16 @@ package edu.ib.metamotionrl
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
+import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.View
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import bolts.Continuation
 import com.github.mikephil.charting.charts.LineChart
@@ -37,7 +39,7 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
     var dataX = ArrayList<Float>()
     var dataY = ArrayList<Float>()
     var dataZ = ArrayList<Float>()
-    var dataT = ArrayList<Date>()
+    var dataT = ArrayList<Float>()
     val f = 10F
     private var dataXScal = 0F
     private var dataYScal = 0F
@@ -56,8 +58,8 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
 
         ///< Bind the service when the activity is created
         applicationContext.bindService(
-            Intent(this, BtleService::class.java),
-            this, BIND_AUTO_CREATE
+                Intent(this, BtleService::class.java),
+                this, BIND_AUTO_CREATE
         )
 
         findViewById<View>(R.id.start).setOnClickListener {
@@ -74,6 +76,7 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
                 dataX.clear()
                 dataY.clear()
                 dataZ.clear()
+                dataT.clear()
                 lineEntryX.clear()
                 lineEntryY.clear()
                 lineEntryZ.clear()
@@ -83,6 +86,40 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
         findViewById<View>(R.id.stop).setOnClickListener {
             accelerometer.stop()
             accelerometer.acceleration().stop()
+        }
+
+        findViewById<View>(R.id.save).setOnClickListener {
+            // inflate the layout of the popup window
+            val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
+            val popupView: View = inflater.inflate(R.layout.savedata, null)
+
+            // create the popup window
+            val width = LinearLayout.LayoutParams.WRAP_CONTENT
+            val height = LinearLayout.LayoutParams.WRAP_CONTENT
+            val focusable = true
+
+            val popupWindow = PopupWindow(popupView, width, height, focusable)
+
+            // show the popup window
+            popupWindow.showAtLocation(it, Gravity.CENTER, 0, 0);
+
+            val saveButton= popupView.findViewById(R.id.saveButton) as Button
+            saveButton.setOnClickListener(){
+                val fileName = popupView.findViewById(R.id.filename) as EditText
+                val name = fileName.text.toString()
+                if (name.isNotEmpty()) {
+                    saveData(name)
+                    popupWindow.dismiss()
+                }
+                else{
+                    Toast.makeText(this, "Wrong filename", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+
+        findViewById<View>(R.id.database).setOnClickListener {
+            val intent = Intent(this, StoredData::class.java)
+            this.startActivity(intent)
         }
     }
 
@@ -97,7 +134,7 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
         serviceBinder = service as LocalBinder
 
         try {
-        // mac addr z czujnika
+        // device mac addr
         retriveBoard("F6:3A:8F:2E:A7:79")
         }catch (e: Exception){
             Log.e("Device", "Failed to update chart")
@@ -106,7 +143,7 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
 
     override fun onServiceDisconnected(componentName: ComponentName?) {}
 
-    // połączenie z czujnikiem
+    // device connection
     private fun retriveBoard(macAddr: String) {
         var board: MetaWearBoard? = null
         val btManager : BluetoothManager = this.getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
@@ -126,11 +163,11 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
 
             accelerometer.acceleration().addRouteAsync(RouteBuilder { source ->
                 source.stream { data, env ->
-                    //dataD = data.value(Acceleration::class.java).toString()
                     dataX.add(data.value(Acceleration::class.java).x() - dataXScal)
                     dataY.add(data.value(Acceleration::class.java).y() - dataYScal)
                     dataZ.add(data.value(Acceleration::class.java).z() - dataZScal)
-                    dataD = "x: ${String.format("%.3f",dataX[dataX.size - 1])}, y: ${String.format("%.3f",dataY[dataY.size - 1])}, z: ${String.format("%.3f",dataZ[dataZ.size - 1])}"
+                    dataT.add(dataX.size / f)
+                    dataD = "x: ${String.format("%.3f", dataX[dataX.size - 1])}, y: ${String.format("%.3f", dataY[dataY.size - 1])}, z: ${String.format("%.3f", dataZ[dataZ.size - 1])}"
 
                     Log.i("Accelerometer", dataD)
                     //setLineChartData()
@@ -139,9 +176,7 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
                         deviceData.text = dataD
                         setLineChartData()
                     }
-
                 }
-
             })
         }?.continueWith(Continuation<Route?, Void?> { task ->
             if (task.isFaulted) {
@@ -156,6 +191,7 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
         })
     }
 
+    // configure chart properties
     private fun configureLineChart() {
         chart.xAxis.labelCount = 5
         chart.xAxis.mAxisMaximum = 100F
@@ -166,10 +202,9 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
     private fun setLineChartData(){
         try {
             // add new points
-            lineEntryX.add(Entry((dataX.size / f), dataX[dataX.size - 1]))
-            lineEntryY.add(Entry((dataY.size / f), dataY[dataY.size - 1]))
-            lineEntryZ.add(Entry((dataZ.size / f), dataZ[dataZ.size - 1]))
-
+            lineEntryX.add(Entry((dataT[dataX.size - 1]), dataX[dataX.size - 1]))
+            lineEntryY.add(Entry((dataT[dataY.size - 1]), dataY[dataY.size - 1]))
+            lineEntryZ.add(Entry((dataT[dataZ.size - 1]), dataZ[dataZ.size - 1]))
 
             // chart data format
             val lineDataSetX = LineDataSet(lineEntryX, "X")
@@ -191,6 +226,7 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
             val data = LineData(dataSet as List<LineDataSet>?)
 
             chart.data = data
+            // draw chart
             runOnUiThread {
                 chart.animateXY(1, 1)
                 chart.setVisibleXRangeMaximum(10F)
@@ -199,5 +235,22 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
         }catch (e: Exception){
             Log.e("Device", "Failed to update chart")
         }
+    }
+
+    private fun saveData(name: String){
+        val database = this.openOrCreateDatabase("Database", Context.MODE_PRIVATE, null)
+        val sqlDB = "CREATE TABLE IF NOT EXISTS StoredData (name String, time String, valueX String, valueY String, valueZ String)"
+        database.execSQL(sqlDB)
+        val sql = "INSERT INTO StoredData VALUES (?,?,?,?,?)"
+        val statement = database.compileStatement(sql)
+
+        statement.bindString(1, name)
+        statement.bindString(2, dataT.toString())
+        statement.bindString(3, dataX.toString())
+        statement.bindString(4, dataY.toString())
+        statement.bindString(5, dataZ.toString())
+        statement.executeInsert()
+
+        Toast.makeText(this, "Data saved", Toast.LENGTH_LONG).show()
     }
 }
