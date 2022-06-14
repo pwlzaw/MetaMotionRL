@@ -237,20 +237,24 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
         }
     }
 
-    private fun saveData(name: String){
+    private fun saveData(name: String) {
         val database = this.openOrCreateDatabase("Database", Context.MODE_PRIVATE, null)
         val sqlDB = "CREATE TABLE IF NOT EXISTS StoredData (name String, time String, valueX String, valueY String, valueZ String)"
         database.execSQL(sqlDB)
-        val sql = "INSERT INTO StoredData VALUES (?,?,?,?,?)"
-        val statement = database.compileStatement(sql)
+        try {
+            val sql = "INSERT INTO StoredData VALUES (?,?,?,?,?)"
+            val statement = database.compileStatement(sql)
 
-        statement.bindString(1, name)
-        statement.bindString(2, dataT.toString())
-        statement.bindString(3, dataX.toString())
-        statement.bindString(4, dataY.toString())
-        statement.bindString(5, dataZ.toString())
-        statement.executeInsert()
+            statement.bindString(1, name)
+            statement.bindString(2, dataT.toString())
+            statement.bindString(3, dataX.toString())
+            statement.bindString(4, dataY.toString())
+            statement.bindString(5, dataZ.toString())
+            statement.executeInsert()
 
-        Toast.makeText(this, "Data saved", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Data saved", Toast.LENGTH_LONG).show()
+        } catch (e: Exception){
+            Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG).show()
+        }
     }
 }

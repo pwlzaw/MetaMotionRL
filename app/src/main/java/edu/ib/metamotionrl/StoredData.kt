@@ -24,7 +24,7 @@ class StoredData: AppCompatActivity() {
         setContentView(R.layout.database)
 
         database = this.openOrCreateDatabase("Database", Context.MODE_PRIVATE, null)
-        val sqlDB = "CREATE TABLE IF NOT EXISTS StoredData (name String, time String, valueX String, valueY String, valueZ String)"
+        val sqlDB = "CREATE TABLE IF NOT EXISTS StoredData (name String NOT NULL PRIMARY KEY, time String, valueX String, valueY String, valueZ String)"
         database.execSQL(sqlDB)
 
         results = ArrayList<String>()
