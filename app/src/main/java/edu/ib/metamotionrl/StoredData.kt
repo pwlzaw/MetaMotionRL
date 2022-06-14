@@ -27,7 +27,7 @@ class StoredData: AppCompatActivity() {
         val sqlDB = "CREATE TABLE IF NOT EXISTS StoredData (name String NOT NULL PRIMARY KEY, time String, valueX String, valueY String, valueZ String)"
         database.execSQL(sqlDB)
 
-        results = ArrayList<String>()
+        results = ArrayList()
         val c = database.rawQuery(
                 "SELECT name FROM StoredData",
                 null

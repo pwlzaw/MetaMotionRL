@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         deviceData = findViewById<View>(R.id.data) as TextView
-        chart = findViewById(R.id.activity_main_linechart);
+        chart = findViewById(R.id.activity_main_linechart)
         configureLineChart()
 
         ///< Bind the service when the activity is created
@@ -108,10 +108,12 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
                 val fileName = popupView.findViewById(R.id.filename) as EditText
                 val name = fileName.text.toString()
                 if (name.isNotEmpty()) {
-                    saveData(name)
-                    popupWindow.dismiss()
-                }
-                else{
+                    if (dataX.size > 0) {
+                        saveData(name)
+                        popupWindow.dismiss()
+                    }else
+                        Toast.makeText(this, "No data to save", Toast.LENGTH_LONG).show()
+                }else{
                     Toast.makeText(this, "Wrong filename", Toast.LENGTH_LONG).show()
                 }
             }
@@ -239,7 +241,7 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
 
     private fun saveData(name: String) {
         val database = this.openOrCreateDatabase("Database", Context.MODE_PRIVATE, null)
-        val sqlDB = "CREATE TABLE IF NOT EXISTS StoredData (name String, time String, valueX String, valueY String, valueZ String)"
+        val sqlDB = "CREATE TABLE IF NOT EXISTS StoredData (name String NOT NULL PRIMARY KEY, time String, valueX String, valueY String, valueZ String)"
         database.execSQL(sqlDB)
         try {
             val sql = "INSERT INTO StoredData VALUES (?,?,?,?,?)"
@@ -254,7 +256,8 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
 
             Toast.makeText(this, "Data saved", Toast.LENGTH_LONG).show()
         } catch (e: Exception){
-            Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Wrong filename", Toast.LENGTH_LONG).show()
         }
     }
+
 }
