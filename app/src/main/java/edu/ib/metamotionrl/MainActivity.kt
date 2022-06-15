@@ -62,11 +62,17 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
                 this, BIND_AUTO_CREATE
         )
 
+        // start button
         findViewById<View>(R.id.start).setOnClickListener {
-            accelerometer.start()
-            accelerometer.acceleration().start()
+            try {
+                accelerometer.start()
+                accelerometer.acceleration().start()
+            }catch (e: Exception){
+                Toast.makeText(this, "Operation failed", Toast.LENGTH_LONG).show()
+            }
         }
 
+        // calibration button
         findViewById<View>(R.id.calibration).setOnClickListener {
             if (dataX.size > 0) {
                 dataXScal += dataX[dataX.size - 1]
@@ -83,9 +89,14 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
             }
         }
 
+        // stop button
         findViewById<View>(R.id.stop).setOnClickListener {
-            accelerometer.stop()
-            accelerometer.acceleration().stop()
+            try {
+                accelerometer.stop()
+                accelerometer.acceleration().stop()
+            }catch (e: Exception){
+                Toast.makeText(this, "Operation failed", Toast.LENGTH_LONG).show()
+            }
         }
 
         findViewById<View>(R.id.save).setOnClickListener {
@@ -195,8 +206,8 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
 
     // configure chart properties
     private fun configureLineChart() {
-        chart.xAxis.labelCount = 5
-        chart.xAxis.mAxisMaximum = 100F
+        chart.description.isEnabled = false
+        chart.xAxis.mAxisMaximum = 10F
         chart.xAxis.mAxisMinimum = 0F
     }
 
@@ -239,6 +250,7 @@ class MainActivity : AppCompatActivity(), ServiceConnection {
         }
     }
 
+    // save data in the database
     private fun saveData(name: String) {
         val database = this.openOrCreateDatabase("Database", Context.MODE_PRIVATE, null)
         val sqlDB = "CREATE TABLE IF NOT EXISTS StoredData (name String NOT NULL PRIMARY KEY, time String, valueX String, valueY String, valueZ String)"

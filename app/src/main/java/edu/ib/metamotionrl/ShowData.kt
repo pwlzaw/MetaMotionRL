@@ -34,6 +34,7 @@ class ShowData : AppCompatActivity(){
         nameDisp.text = name
         val list = findViewById<ListView>(R.id.listV)
         chart = findViewById(R.id.linechart)
+        chart.description.isEnabled = false
 
         val database = this.openOrCreateDatabase("Database", Context.MODE_PRIVATE, null)
         val sqlDB = "CREATE TABLE IF NOT EXISTS StoredData (name String NOT NULL PRIMARY KEY, time String, valueX String, valueY String, valueZ String)"
@@ -82,6 +83,7 @@ class ShowData : AppCompatActivity(){
         val lineEntryY = ArrayList<Entry>()
         val lineEntryZ = ArrayList<Entry>()
 
+            // create chart data
             dataT.forEachIndexed { index, element ->
                 lineEntryX.add(Entry((element), dataX[index]))
                 lineEntryY.add(Entry((element), dataY[index]))
@@ -107,15 +109,18 @@ class ShowData : AppCompatActivity(){
 
             val data = LineData(dataSet as List<LineDataSet>?)
 
+            // display data on chart
             chart.data = data
             chart.animateXY(1, 1)
     }
 
+    // back button
     fun onBack(view: View) {
         val intent = Intent(this, StoredData::class.java)
         this.startActivity(intent)
     }
 
+    // convert String data to ArrayList
     private fun makeArray(st: String): ArrayList<Float> {
         val s = st.substring(1,st.length-1)
         val tokens = StringTokenizer(s, ",")
